@@ -18,9 +18,9 @@ type Operator interface {
 	Operate() int
 }
 
-// One implementation of the Operator interface.
-// A Node of a tree structure, that contains an
-// Operation to apply to it children.
+// Node is one implementation of the Operator
+// interface. A Node of a tree structure, that
+// contains an Operation to apply to it children.
 type Node struct {
 	Left      *Node
 	Right     *Node
@@ -43,20 +43,24 @@ func (n *Node) Operate() int {
 	return i
 }
 
-// One simple implementation of the Parser interface.
+// SimpleParser is one simple implementation of the
+// Parser interface.
 type SimpleParser struct {
 	Lex       Lexer
 	CurrToken Token
 }
 
-// Consumes a Token of Type tokenType.
+// eat consumes a Token of Type tokenType. If there is
+// a sintax error it panics.
 func (sp *SimpleParser) eat(tokenType string) {
 	if sp.CurrToken.Type == tokenType {
 		sp.CurrToken = sp.Lex.Lex()
+	} else {
+		panic("syntax error")
 	}
 }
 
-// Implements the factor rule:
+// factor implements the factor rule:
 //
 // factor: INT | LPAR expr RPAR
 //
@@ -72,7 +76,7 @@ func (sp *SimpleParser) factor() *Node {
 	}
 }
 
-// Implements the term rule:
+// term implements the term rule:
 //
 // term: factor((MUL|DIV) factor)*
 //
@@ -85,7 +89,7 @@ func (sp *SimpleParser) term() *Node {
 	return node
 }
 
-// Implements the expr rule:
+// expr implements the expr rule:
 //
 // expr: term((SUM|SUBS) term)*
 //
@@ -98,7 +102,7 @@ func (sp *SimpleParser) expr() *Node {
 	return node
 }
 
-// Parses the expresion into a tree.
+// Parse parses the expresion into a tree.
 // Return the root of the tree as an
 // Operator
 func (sp *SimpleParser) Parse() Operator {

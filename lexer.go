@@ -22,18 +22,20 @@ type Token struct {
 	Value string
 }
 
-// Simple implementantion of the Lexer interface.
+// SimpleLexer is an implementantion of the Lexer
+// interface.
 type SimpleLexer struct {
 	Reader *bufio.Scanner
 	Text   string
 	Pos    int
 }
 
-// Scans the next line in the input and assigns it to
-// the Text string to be tokenized.
+// ScanLine scans the next line in the input and
+// assigns it to the Text string to be tokenized.
 func (sl *SimpleLexer) ScanLine() error {
 	sl.Reader.Scan()
 	sl.Text = sl.Reader.Text()
+	sl.Pos = 0
 
 	if err := sl.Reader.Err(); err != nil && err != io.EOF {
 		return err
@@ -50,7 +52,7 @@ func (sl *SimpleLexer) advance() error {
 	return errors.New("Posicion fuera de rango")
 }
 
-// Gets a multiple digit int form the Text string.
+// getiNt gets a multiple digit int form the Text string.
 func (sl *SimpleLexer) getInt() string {
 	var str string
 	for sl.Pos != len(sl.Text) && unicode.IsDigit(rune(sl.Text[sl.Pos])) {
@@ -63,8 +65,9 @@ func (sl *SimpleLexer) getInt() string {
 	return str
 }
 
-// Skips white spaces as defined in the unicode package.
-// Includes, but is not limited to, spaces and tabs
+// skipSpaces skips white spaces as defined in the
+// unicode package. Includes, but is not limited to,
+// spaces and tabs
 func (sl *SimpleLexer) skipSpaces() {
 	for unicode.IsSpace(rune(sl.Text[sl.Pos])) {
 		if err := sl.advance(); err != nil {
@@ -73,7 +76,7 @@ func (sl *SimpleLexer) skipSpaces() {
 	}
 }
 
-// Returns the next Token in the Text string.
+// Lex returns the next Token in the Text string.
 // Posible Types: "EOF", "INT", "LPAR", "RPAR" and "OPR"
 func (sl *SimpleLexer) Lex() Token {
 	if sl.Pos == len(sl.Text) {
