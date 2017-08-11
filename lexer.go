@@ -32,15 +32,18 @@ type SimpleLexer struct {
 
 // ScanLine scans the next line in the input and
 // assigns it to the Text string to be tokenized.
-func (sl *SimpleLexer) ScanLine() error {
-	sl.Reader.Scan()
-	sl.Text = sl.Reader.Text()
-	sl.Pos = 0
-
-	if err := sl.Reader.Err(); err != nil && err != io.EOF {
-		return err
+func (sl *SimpleLexer) scanLine() error {
+	if sl.Reader.Scan() {
+		sl.Text = sl.Reader.Text()
+		sl.Pos = 0
+		return nil
+	} else {
+		if err := sl.Reader.Err(); err != nil {
+			return err
+		} else {
+			return io.EOF
+		}
 	}
-	return nil
 }
 
 // Advances the position in the Text string.
@@ -80,7 +83,15 @@ func (sl *SimpleLexer) skipSpaces() {
 // Posible Types: "EOF", "INT", "LPAR", "RPAR" and "OPR"
 func (sl *SimpleLexer) Lex() Token {
 	if sl.Pos == len(sl.Text) {
-		return Token{"EOF", "EOF"}
+		err := sl.scanLine()
+		switch err {
+		case nil:
+			return sl.Lex()
+		case io.EOF:
+			return Token{"EOF", "EOF"}
+		default:
+			panic("syntax error")
+		}
 	}
 
 	if c := rune(sl.Text[sl.Pos]); unicode.IsSpace(c) {

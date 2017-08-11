@@ -7,40 +7,7 @@ import (
 
 // Parser interface to build an Interpreter.
 type Parser interface {
-	Parse() Operator
-}
-
-// Te parser will return an Operator interface.
-// This interface provides a method that the
-// Interpreter can use to interpret the parsed
-// expresion.
-type Operator interface {
-	Operate() int
-}
-
-// Node is one implementation of the Operator
-// interface. A Node of a tree structure, that
-// contains an Operation to apply to it children.
-type Node struct {
-	Left      *Node
-	Right     *Node
-	Operation string
-}
-
-// Node Operate implementation.
-func (n *Node) Operate() int {
-	switch n.Operation {
-	case "+":
-		return n.Left.Operate() + n.Right.Operate()
-	case "-":
-		return n.Left.Operate() - n.Right.Operate()
-	case "*":
-		return n.Left.Operate() * n.Right.Operate()
-	case "/":
-		return n.Left.Operate() / n.Right.Operate()
-	}
-	i, _ := strconv.Atoi(n.Operation)
-	return i
+	Parse() Interpreter
 }
 
 // SimpleParser is one simple implementation of the
@@ -64,10 +31,10 @@ func (sp *SimpleParser) eat(tokenType string) {
 //
 // factor: INT | LPAR expr RPAR
 //
-func (sp *SimpleParser) factor() *Node {
+func (sp *SimpleParser) factor() Interpreter {
 	if t := sp.CurrToken; t.Type == "INT" {
 		sp.eat("INT")
-		return &Node{nil, nil, t.Value}
+		return &OprNode{nil, nil, t.Value}
 	} else {
 		sp.eat("LPAR")
 		node := sp.expr()
@@ -80,11 +47,11 @@ func (sp *SimpleParser) factor() *Node {
 //
 // term: factor((MUL|DIV) factor)*
 //
-func (sp *SimpleParser) term() *Node {
+func (sp *SimpleParser) term() Interpreter {
 	node := sp.factor()
 	for value := sp.CurrToken.Value; value == "*" || value == "/"; value = sp.CurrToken.Value {
 		sp.eat("OPR")
-		node = &Node{node, sp.factor(), value}
+		node = &OprNode{node, sp.factor(), value}
 	}
 	return node
 }
@@ -93,18 +60,18 @@ func (sp *SimpleParser) term() *Node {
 //
 // expr: term((SUM|SUBS) term)*
 //
-func (sp *SimpleParser) expr() *Node {
+func (sp *SimpleParser) expr() Interpreter {
 	node := sp.term()
 	for value := sp.CurrToken.Value; value == "+" || value == "-"; value = sp.CurrToken.Value {
 		sp.eat("OPR")
-		node = &Node{node, sp.term(), value}
+		node = &OprNode{node, sp.term(), value}
 	}
 	return node
 }
 
 // Parse parses the expresion into a tree.
 // Return the root of the tree as an
-// Operator
-func (sp *SimpleParser) Parse() Operator {
+// Interpreter
+func (sp *SimpleParser) Parse() Interpreter {
 	return sp.expr()
 }
