@@ -1,5 +1,5 @@
 // parser
-package color
+package toy
 
 // Parser interface to build an Interpreter.
 type Parser interface {
@@ -44,11 +44,11 @@ func (sp *SimpleParser) factor() Interpreter {
 
 // term implements the term rule:
 //
-// term: factor((MUL|DIV) factor)*
+// term: factor((MUL|DIV|OR) factor)*
 //
 func (sp *SimpleParser) term() Interpreter {
 	node := sp.factor()
-	for value := sp.currToken.Value; value == "*" || value == "/"; value = sp.currToken.Value {
+	for value := sp.currToken.Value; value == "*" || value == "/" || value == "|"; value = sp.currToken.Value {
 		sp.eat("OPR")
 		node = &OprNode{node, sp.factor(), value}
 	}
@@ -57,11 +57,11 @@ func (sp *SimpleParser) term() Interpreter {
 
 // expr implements the expr rule:
 //
-// expr: term((SUM|SUBS) term)*
+// expr: term((SUM|SUBS|AND) term)*
 //
 func (sp *SimpleParser) expr() Interpreter {
 	node := sp.term()
-	for value := sp.currToken.Value; value == "+" || value == "-"; value = sp.currToken.Value {
+	for value := sp.currToken.Value; value == "+" || value == "-" || value == "&"; value = sp.currToken.Value {
 		sp.eat("OPR")
 		node = &OprNode{node, sp.term(), value}
 	}
@@ -81,9 +81,23 @@ func (sp *SimpleParser) line() Interpreter {
 	return node
 }
 
+// ifblock implements the ifblock rule:
+//
+// ifblock: KW LPAR expr RPAR LCOR block RCOR
+//
+func (sp *SimpleParser) ifblock() Interpreter {
+	sp.eat("KW")
+	sp.eat("LPAR")
+	enode := sp.expr()
+	sp.eat("LCOR")
+	bnode := sp.block()
+	sp.eat("RCOR")
+	return &IfNode{enode, bnode}
+}
+
 // block implements the block rule:
 //
-// block: (line)*
+// block: (line | ifblock)*
 //
 func (sp *SimpleParser) block() Interpreter {
 	lines := make([]Interpreter, 0, 20)
@@ -95,7 +109,11 @@ func (sp *SimpleParser) block() Interpreter {
 			lines = temp
 		}
 		lines = lines[:n+1]
-		lines[n] = sp.line()
+		if sp.currToken.Value == "if" {
+			lines[n] = sp.ifblock()
+		} else {
+			lines[n] = sp.line()
+		}
 	}
 	return &BlockNode{lines}
 }

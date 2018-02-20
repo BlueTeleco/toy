@@ -1,5 +1,5 @@
 // interpreter
-package color
+package toy
 
 import (
 	"strconv"
@@ -25,14 +25,19 @@ type OprNode struct {
 // OprNode Interprete implementation.
 func (on *OprNode) Interprete() int {
 	switch on.Operation {
-	case "+":
+	case "+", "&":
 		return on.Left.Interprete() + on.Right.Interprete()
 	case "-":
 		return on.Left.Interprete() - on.Right.Interprete()
-	case "*":
+	case "*", "|":
 		return on.Left.Interprete() * on.Right.Interprete()
 	case "/":
 		return on.Left.Interprete() / on.Right.Interprete()
+	case ">":
+		if on.Left.Interprete() > on.Right.Interprete() {
+			return 1
+		}
+		return 0
 	}
 	i, _ := strconv.Atoi(on.Operation)
 	return i
@@ -71,4 +76,20 @@ func (bn *BlockNode) Interprete() int {
 		son.Interprete()
 	}
 	return 0
+}
+
+// IfNode is one implementation of the Interpreter
+// interface. A node of a tree structure that implements
+// an if control structure.
+type IfNode struct {
+	Expresion Interpreter
+	Block     Interpreter
+}
+
+// IfNode Interprete implementation.
+func (in *IfNode) Interprete() int {
+	if in.Expresion.Interprete() > 0 {
+		return in.Block.Interprete()
+	}
+	return 1
 }

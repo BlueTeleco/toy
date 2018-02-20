@@ -1,5 +1,5 @@
 // lexer
-package color
+package toy
 
 import (
 	"bufio"
@@ -111,33 +111,40 @@ func (sl *SimpleLexer) Lex() Token {
 		}
 	}
 
-	if c := rune(sl.text[sl.pos]); unicode.IsSpace(c) {
+	switch c := rune(sl.text[sl.pos]); {
+	case unicode.IsSpace(c):
 		sl.skipSpaces()
 		return sl.Lex()
-	} else if unicode.IsDigit(c) {
+	case unicode.IsDigit(c):
 		return Token{"INT", sl.getInt()}
-	} else if unicode.IsLetter(c) {
+	case unicode.IsLetter(c):
 		w := sl.getWord()
 		if sl.keyWords[w] {
 			return Token{"KW", w}
 		}
 		return Token{"NAME", w}
-	} else if c == '#' && sl.pos == 0 {
+	case c == '#' && sl.pos == 0:
 		sl.scanLine()
 		return sl.Lex()
-	} else if c == '(' {
+	case c == '(':
 		sl.advance()
 		return Token{"LPAR", string(c)}
-	} else if c == ')' {
+	case c == ')':
 		sl.advance()
 		return Token{"RPAR", string(c)}
-	} else if c == '=' {
+	case c == '{':
+		sl.advance()
+		return Token{"LCOR", string(c)}
+	case c == '}':
+		sl.advance()
+		return Token{"RCOR", string(c)}
+	case c == '=':
 		sl.advance()
 		return Token{"ASGN", string(c)}
-	} else if c == ';' {
+	case c == ';':
 		sl.advance()
 		return Token{"DCOMA", string(c)}
-	} else {
+	default:
 		sl.advance()
 		return Token{"OPR", string(c)}
 	}
@@ -146,7 +153,6 @@ func (sl *SimpleLexer) Lex() Token {
 // NewSimpleLexer constructs a new SimpleLexer struct.
 func NewSimpleLexer(sc *bufio.Scanner) *SimpleLexer {
 	m := make(map[string]bool)
-	m["VAR"] = true
-	m["int"] = true
+	m["if"] = true
 	return &SimpleLexer{sc, "", 0, m}
 }
